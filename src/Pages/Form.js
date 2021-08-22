@@ -16,27 +16,18 @@ import axios from "axios";
 import CustomButton from "../components/CustomButton";
 import clsx from "clsx";
 import CustomTable from "../components/CustomTable";
+import { Grid } from "@material-ui/core";
+import { Paper } from "@material-ui/core";
+import { Container } from "@material-ui/core";
 
 const useStyles = makeStyles({
-  box: {
-    margin: "100px",
-    display: "flex",
+  mainContainer: {
+    padding: "30px",
   },
-  outerBox: {
-    marginTop: "25px",
-    display: "flex",
-  },
-  innerBox: {
-    margin: "25px",
-  },
-  buttonGroup: {
-    marginRight: "25px",
-  },
-  button: {
-    margin: "100px",
-  },
+  paper: { padding: "30px" },
+
   formControl: {
-    minWidth: 120,
+    width: "max",
   },
 });
 
@@ -94,10 +85,6 @@ const Form = () => {
     setCountry(value);
   };
 
-  const getSwitchInfo = () => {
-    console.log(switchRef);
-  };
-
   const submitHandler = () => {
     const userCountry = countries[country].countryName;
     const userInfo = {
@@ -138,138 +125,139 @@ const Form = () => {
   };
 
   return (
-    <>
-      <Box classes={classes.box}>
-        <Box className={classes.outerBox}>
-          <Box className={classes.innerBox}>
-            <TextField
-              id="name-input"
-              label="Name"
-              variant="outlined"
-              onChange={(e) => userNameHandler(e.target.value)}
-            />
-          </Box>
-          <Box className={classes.innerBox}>
-            <TextField
-              required
-              id="surname-input"
-              label="Surname"
-              variant="outlined"
-              onChange={(e) => surnameHandler(e.target.value)}
-            />
-          </Box>
-          <Box className={classes.innerBox}>
-            <FormControl className={classes.formControl}>
-              <InputLabel id="coutry-label">Country</InputLabel>
-              <Select
-                labelId="country-label"
-                id="country-select"
-                value={country}
-                onChange={(e) => countryHandler(e.target.value)}
-              >
-                {countries.map((item) => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.countryName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-        </Box>
-        <Box className={classes.outerBox}>
-          <Box className={classes.innerBox}>
-            <FormControl
-              className={clsx(classes.buttonGroup, classes.button)}
-              component="fieldset"
-            >
-              <FormLabel component="legend">Gender</FormLabel>
-              <RadioGroup
-                aria-label="gender"
-                name="gender1"
-                value={gender}
-                onChange={(e) => genderHandler(e.target.value)}
-              >
+    <Grid container>
+      <Grid item xs={4}>
+        <Container
+          component="main"
+          maxWidth="xs"
+          className={classes.mainContainer}
+        >
+          <Paper className={classes.paper}>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  id="name-input"
+                  label="Name"
+                  variant="outlined"
+                  onChange={(e) => userNameHandler(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  required
+                  id="surname-input"
+                  label="Surname"
+                  variant="outlined"
+                  onChange={(e) => surnameHandler(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel id="coutry-label">Country</InputLabel>
+                  <Select
+                    labelId="country-label"
+                    id="country-select"
+                    value={country}
+                    onChange={(e) => countryHandler(e.target.value)}
+                  >
+                    {countries.map((item) => (
+                      <MenuItem key={item.id} value={item.id}>
+                        {item.countryName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={4}>
+                <TextField
+                  label="Weight"
+                  type="number"
+                  id="weight-input"
+                  onChange={(e) => weightHandler(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        {isImperialUnit ? "Lbs" : "Kg"}
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid item xs={4}>
+                <TextField
+                  ref={switchRef}
+                  label="Height"
+                  id="height-input"
+                  type="number"
+                  onChange={(e) => heightHandler(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        {isImperialUnit ? "Inc" : "Cm"}
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid item xs={4}>
                 <FormControlLabel
-                  value="female"
-                  control={<Radio />}
-                  label="Female"
+                  control={
+                    <Switch
+                      checked={isImperialUnit}
+                      onChange={() => unitHandler()}
+                      name="checkedA"
+                      inputProps={{ "aria-label": "secondary checkbox" }}
+                    />
+                  }
+                  label={isImperialUnit ? "Imperial" : "Metric"}
+                  labelPlacement="top"
                 />
-                <FormControlLabel
-                  value="male"
-                  control={<Radio />}
-                  label="Male"
-                />
-                <FormControlLabel
-                  value="other"
-                  control={<Radio />}
-                  label="Other"
-                />
-              </RadioGroup>
-            </FormControl>
-          </Box>
-          <Box className={classes.innerBox}>
-            <TextField
-              label="Weight"
-              type="number"
-              id="weight-input"
-              onChange={(e) => weightHandler(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    {isImperialUnit ? "Lbs" : "Kg"}
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
-          <Box className={classes.innerBox}>
-            <TextField
-              ref={switchRef}
-              label="Height"
-              id="height-input"
-              type="number"
-              onChange={(e) => heightHandler(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    {isImperialUnit ? "Inc" : "Cm"}
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
-          <Box className={classes.innerBox}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={isImperialUnit}
-                  onChange={() => unitHandler()}
-                  name="checkedA"
-                  inputProps={{ "aria-label": "secondary checkbox" }}
-                />
-              }
-              label="Is Unit Imperial"
-              labelPlacement="top"
-            />
-          </Box>
-          <Box className={classes.outerBox}>
-            <Box className={classes.innerBox}>
-              <CustomButton
-                buttonFunction={() => submitHandler()}
-                buttonText={"Submit"}
-              ></CustomButton>
-            </Box>
-            <Box className={classes.innerBox}>
-              <CustomButton
-                buttonFunction={() => getSwitchInfo()}
-                buttonText={"Get Ref Info"}
-              ></CustomButton>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-      <CustomTable tableData={usersData} />
-    </>
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl
+                  className={clsx(classes.buttonGroup, classes.button)}
+                  component="fieldset"
+                >
+                  <FormLabel component="legend">Gender</FormLabel>
+                  <RadioGroup
+                    row
+                    aria-label="gender"
+                    name="gender1"
+                    value={gender}
+                    onChange={(e) => genderHandler(e.target.value)}
+                  >
+                    <FormControlLabel
+                      value="female"
+                      control={<Radio />}
+                      label="Female"
+                    />
+                    <FormControlLabel
+                      value="male"
+                      control={<Radio />}
+                      label="Male"
+                    />
+                    <FormControlLabel
+                      value="other"
+                      control={<Radio />}
+                      label="Other"
+                    />
+                  </RadioGroup>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <CustomButton
+                  buttonFunction={() => submitHandler()}
+                  buttonText={"Submit"}
+                ></CustomButton>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Container>
+      </Grid>
+      <Grid item xs={8} className={classes.mainContainer}>
+        <CustomTable tableData={usersData} />
+      </Grid>
+    </Grid>
   );
 };
 
