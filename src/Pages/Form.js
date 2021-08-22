@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
-import { makeStyles } from "@material-ui/core/styles";
+import { createTheme, ThemeProvider, makeStyles } from "@material-ui/core/styles";
 import InputAdornment from "@material-ui/core/InputAdornment";
 import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
@@ -15,21 +15,50 @@ import Select from "@material-ui/core/Select";
 import axios from "axios";
 import CustomButton from "../components/CustomButton";
 import clsx from "clsx";
+import Typography from '@material-ui/core/Typography';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableContainer from '@material-ui/core/TableContainer';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Paper from '@material-ui/core/Paper';
+
+
 
 const useStyles = makeStyles({
+  mleft: {
+    marginLeft: "10px",
+  },
+  radioButtons: {
+    marginTop: "-100px",
+  },
+  centeredText: {
+    marginTop: "30px",
+    display: "flex",
+    justifyContent: "center",
+    fontFamily: "Oxygen, sans-serif",
+    color: "#3F51B5"
+  },
   box: {
     margin: "100px",
     display: "flex",
+    justifyContent: "center",
+  },
+  tableBox: {
+    maxWidth: "1400px"
   },
   outerBox: {
     marginTop: "25px",
     display: "flex",
+    justifyContent: "center",
   },
   innerBox: {
-    margin: "25px",
+    margin: "20px",
   },
   buttonGroup: {
     marginRight: "25px",
+    maxHeight: "50px"
   },
   button: {
     margin: "100px",
@@ -37,7 +66,18 @@ const useStyles = makeStyles({
   formControl: {
     minWidth: 120,
   },
+  table: {
+    minWidth: 650,
+    backgroundColor: "#fafafa",
+  },
 });
+
+const theme = createTheme();
+
+
+theme.typography.h1 = {
+  fontSize: "60px",
+};
 
 const Form = () => {
   const classes = useStyles();
@@ -50,6 +90,11 @@ const Form = () => {
   const [country, setCountry] = useState("");
   const [countries, setCountries] = useState([]);
   const [isImperialUnit, setIsImperialUnit] = useState(false);
+  const temp = JSON.parse(localStorage.getItem("usersInformation")) || [];
+  const [rows, setRows] = useState(temp);
+  const [isFilled, setIsFilled] = useState(true);
+  const [copied, setCopied] = useState(false);
+
 
   const switchRef = useRef();
 
@@ -57,11 +102,6 @@ const Form = () => {
     getCountries();
   }, []);
 
-  useEffect(() => {
-    const savedUserInfo = localStorage.getItem("userInformation");
-    JSON.parse(savedUserInfo)?.isImperialUnit &&
-      setIsImperialUnit(JSON.parse(savedUserInfo).isImperialUnit);
-  }, []);
 
   const surnameHandler = (value) => {
     setSurname(value);
@@ -88,11 +128,23 @@ const Form = () => {
   };
 
   const countryHandler = (value) => {
-    setCountry(value);
+    setCountry(countries[value].countryName);
   };
 
   const getSwitchInfo = () => {
     console.log(switchRef);
+  };
+
+
+  const removeFromLS = (id) => {
+    if (rows.length === 1) {
+      clearLocalStorage();
+      return;
+    }
+    var oldItems = JSON.parse(localStorage.getItem('usersInformation')) || [];
+    oldItems = oldItems.filter((item) => item.id !== id);
+    localStorage.setItem("usersInformation", JSON.stringify(oldItems));
+    setRows(oldItems);
   };
 
   const submitHandler = () => {
@@ -100,14 +152,29 @@ const Form = () => {
       surname,
       weight,
       height,
+      country,
       userName,
       gender,
       isImperialUnit,
-      country,
+      id: new Date().getTime()
     };
 
-    const stringUserInfo = JSON.stringify(userInfo);
-    localStorage.setItem("userInformation", stringUserInfo);
+    if (!userName || !surname) {
+      setIsFilled(false);
+      return;
+    }
+
+    setIsFilled(true);
+    var oldItems = JSON.parse(localStorage.getItem('usersInformation')) || [];
+    oldItems.push(userInfo);
+    localStorage.setItem("usersInformation", JSON.stringify(oldItems));
+
+    setRows(oldItems);
+  };
+
+  const clearLocalStorage = () => {
+    localStorage.clear();
+    setRows([]);
   };
 
   const getCountries = () => {
@@ -120,14 +187,35 @@ const Form = () => {
     });
   };
 
+  const copyToClipboard = (id) => {
+    rows.map((row) => {
+      if (row.id === id) {
+        const kgOrLbs = row.isImperialUnit ? " lbs" : " kg";
+        const cmOrInc = row.isImperialUnit ? " inc" : " cm";
+        const item = "Name: " + row.userName + ", Surname: " + row.surname +
+          ", Weight: " + row.weight + kgOrLbs + ", Height: " + row.height + cmOrInc + ", Country: " +
+          row.country + ", Is Unit Imperial: " + row.isImperialUnit + ", Gender: " + row.gender;
+        navigator.clipboard.writeText(item);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
+        return;
+      }
+    })
+  }
+
   return (
     <Box classes={classes.box}>
+      <ThemeProvider theme={theme}>
+        <Typography className={classes.centeredText} variant="h1">Basic Form</Typography>
+      </ThemeProvider>
       <Box className={classes.outerBox}>
         <Box className={classes.innerBox}>
           <TextField
+            required
             id="name-input"
             label="Name"
             variant="outlined"
+            defaultValue={userName}
             onChange={(e) => userNameHandler(e.target.value)}
           />
         </Box>
@@ -159,32 +247,6 @@ const Form = () => {
         </Box>
       </Box>
       <Box className={classes.outerBox}>
-        <Box className={classes.innerBox}>
-          <FormControl
-            className={clsx(classes.buttonGroup, classes.button)}
-            component="fieldset"
-          >
-            <FormLabel component="legend">Gender</FormLabel>
-            <RadioGroup
-              aria-label="gender"
-              name="gender1"
-              value={gender}
-              onChange={(e) => genderHandler(e.target.value)}
-            >
-              <FormControlLabel
-                value="female"
-                control={<Radio />}
-                label="Female"
-              />
-              <FormControlLabel value="male" control={<Radio />} label="Male" />
-              <FormControlLabel
-                value="other"
-                control={<Radio />}
-                label="Other"
-              />
-            </RadioGroup>
-          </FormControl>
-        </Box>
         <Box className={classes.innerBox}>
           <TextField
             label="Weight"
@@ -230,21 +292,109 @@ const Form = () => {
             labelPlacement="top"
           />
         </Box>
-        <Box className={classes.outerBox}>
-          <Box className={classes.innerBox}>
-            <CustomButton
-              buttonFunction={() => submitHandler()}
-              buttonText={"Submit"}
-            ></CustomButton>
-          </Box>
-          <Box className={classes.innerBox}>
-            <CustomButton
-              buttonFunction={() => getSwitchInfo()}
-              buttonText={"Get Ref Info"}
-            ></CustomButton>
-          </Box>
+      </Box>
+      <Box className={classes.outerBox}>
+        <Box className={classes.innerBox, classes.radioButtons}>
+          <FormControl
+            className={clsx(classes.buttonGroup, classes.button)}
+            component="fieldset"
+          >
+            <FormLabel component="legend">Gender</FormLabel>
+            <RadioGroup
+              aria-label="gender"
+              name="gender1"
+              value={gender}
+              onChange={(e) => genderHandler(e.target.value)}
+            >
+              <FormControlLabel
+                value="female"
+                control={<Radio />}
+                label="Female"
+              />
+              <FormControlLabel value="male" control={<Radio />} label="Male" />
+              <FormControlLabel
+                value="other"
+                control={<Radio />}
+                label="Other"
+              />
+            </RadioGroup>
+          </FormControl>
         </Box>
       </Box>
+      <Box className={classes.outerBox}>
+        <Box className={classes.innerBox}>
+          <CustomButton
+            buttonFunction={() => submitHandler()}
+            buttonText={"Submit"}
+          ></CustomButton>
+        </Box>
+        <Box className={classes.innerBox}>
+          <CustomButton
+            buttonFunction={() => getSwitchInfo()}
+            buttonText={"Get Ref Info"}
+          ></CustomButton>
+        </Box>
+
+      </Box>
+      <Box className={classes.centeredText}>
+        {!isFilled && <h3>You need to fill both name and surname</h3>}
+      </Box>
+      {copied && <p className={classes.centeredText}>Copied to clipboard</p>}
+      <Box className={classes.outerBox}>
+        <Box className={classes.tableBox}>
+          <TableContainer component={Paper}>
+            <Table className={classes.table} aria-label="simple table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Surname</TableCell>
+                  <TableCell>Weight</TableCell>
+                  <TableCell>Height</TableCell>
+                  <TableCell>Country</TableCell>
+                  <TableCell>Is Unit Imperial</TableCell>
+                  <TableCell>Gender</TableCell>
+                  <TableCell align="right">Operations</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell component="th" scope="row">
+                      {row.userName}
+                    </TableCell>
+                    <TableCell>{row.surname}</TableCell>
+                    <TableCell>{row.weight} {row.isImperialUnit ? "lbs" : "kg"}</TableCell>
+                    <TableCell>{row.height} {row.isImperialUnit ? "inc" : "cm"}</TableCell>
+                    <TableCell>{row.country}</TableCell>
+                    <TableCell>{row.isImperialUnit ? "Yes" : "No"}</TableCell>
+                    <TableCell>{row.gender}</TableCell>
+                    <TableCell align="right">
+                      <CustomButton
+                        buttonFunction={() => removeFromLS(row.id)}
+                        buttonText={"Delete"}
+                      ></CustomButton>
+                      <CustomButton
+                        buttonFunction={() => copyToClipboard(row.id)}
+                        buttonText={"Copy To Clipboard"}
+                      ></CustomButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      </Box>
+
+      <Box className={classes.outerBox}>
+        <Box className={classes.innerBox}>
+          {rows.length !== 0 && <CustomButton
+            buttonFunction={clearLocalStorage}
+            buttonText={"Clear Local Storage"}
+          ></CustomButton>}
+        </Box>
+      </Box>
+
     </Box>
   );
 };
