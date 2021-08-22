@@ -15,6 +15,7 @@ import Select from "@material-ui/core/Select";
 import axios from "axios";
 import CustomButton from "../components/CustomButton";
 import clsx from "clsx";
+import Button from "@material-ui/core/Button";
 import Typography from '@material-ui/core/Typography';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -22,6 +23,9 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import { MdDelete } from 'react-icons/md';
+import { BiClipboard } from 'react-icons/bi';
+import { AiOutlineEdit } from 'react-icons/ai';
 import Paper from '@material-ui/core/Paper';
 
 
@@ -94,6 +98,8 @@ const Form = () => {
   const [rows, setRows] = useState(temp);
   const [isFilled, setIsFilled] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedItem, setEditedItem] = useState(null);
 
 
   const switchRef = useRef();
@@ -148,28 +154,53 @@ const Form = () => {
   };
 
   const submitHandler = () => {
-    const userInfo = {
-      surname,
-      weight,
-      height,
-      country,
-      userName,
-      gender,
-      isImperialUnit,
-      id: new Date().getTime()
-    };
+    if (!isEditMode) {
+      const userInfo = {
+        userName, surname, country, gender, height, weight, isImperialUnit,
+        id: new Date().getTime()
+      };
 
-    if (!userName || !surname) {
-      setIsFilled(false);
-      return;
+      if (!userName || !surname) {
+        setIsFilled(false);
+        setTimeout(() => setIsFilled(true), 3000);
+        return;
+      }
+
+      setIsFilled(true);
+      var oldItems = JSON.parse(localStorage.getItem('usersInformation')) || [];
+      oldItems.push(userInfo);
+      localStorage.setItem("usersInformation", JSON.stringify(oldItems));
+      setRows(oldItems);
     }
 
-    setIsFilled(true);
-    var oldItems = JSON.parse(localStorage.getItem('usersInformation')) || [];
-    oldItems.push(userInfo);
-    localStorage.setItem("usersInformation", JSON.stringify(oldItems));
+    if (isEditMode) {
+      if (!userName || !surname) {
+        setIsFilled(false);
+        setTimeout(() => setIsFilled(true), 3000);
+        return;
+      }
 
-    setRows(oldItems);
+      setIsFilled(true);
+
+      const newRows = rows.map((row) => {
+        if (row.id === editedItem.id) {
+          return { id: row.id, userName, surname, country, gender, height, weight, isImperialUnit }
+        }
+        return row;
+      })
+      setRows(newRows)
+      localStorage.clear();
+      localStorage.setItem("usersInformation", JSON.stringify(newRows));
+      setIsEditMode(false)
+      setEditedItem(null)
+    }
+    setUserName("");
+    setSurname("");
+    setGender("");
+    setWeight(0);
+    setHeight(0);
+    setCountry("");
+    setIsImperialUnit(false)
   };
 
   const clearLocalStorage = () => {
@@ -201,6 +232,19 @@ const Form = () => {
         return;
       }
     })
+  };
+
+  const editRow = (id) => {
+    const itemToEdit = rows.find((item) => id === item.id);
+    setUserName(itemToEdit.userName);
+    setSurname(itemToEdit.surname)
+    setCountry(itemToEdit.country)
+    setGender(itemToEdit.gender)
+    setHeight(itemToEdit.height)
+    setWeight(itemToEdit.weight)
+    setIsImperialUnit(itemToEdit.isImperialUnit)
+    setIsEditMode(true)
+    setEditedItem(itemToEdit)
   }
 
   return (
@@ -215,7 +259,7 @@ const Form = () => {
             id="name-input"
             label="Name"
             variant="outlined"
-            defaultValue={userName}
+            value={userName}
             onChange={(e) => userNameHandler(e.target.value)}
           />
         </Box>
@@ -225,6 +269,7 @@ const Form = () => {
             id="surname-input"
             label="Surname"
             variant="outlined"
+            value={surname}
             onChange={(e) => surnameHandler(e.target.value)}
           />
         </Box>
@@ -252,6 +297,7 @@ const Form = () => {
             label="Weight"
             type="number"
             id="weight-input"
+            value={weight}
             onChange={(e) => weightHandler(e.target.value)}
             InputProps={{
               startAdornment: (
@@ -267,6 +313,7 @@ const Form = () => {
             ref={switchRef}
             label="Height"
             id="height-input"
+            value={height}
             type="number"
             onChange={(e) => heightHandler(e.target.value)}
             InputProps={{
@@ -283,6 +330,7 @@ const Form = () => {
             control={
               <Switch
                 checked={isImperialUnit}
+                color="primary"
                 onChange={() => unitHandler()}
                 name="checkedA"
                 inputProps={{ "aria-label": "secondary checkbox" }}
@@ -308,13 +356,13 @@ const Form = () => {
             >
               <FormControlLabel
                 value="female"
-                control={<Radio />}
+                control={<Radio color="primary"/>}
                 label="Female"
               />
-              <FormControlLabel value="male" control={<Radio />} label="Male" />
+              <FormControlLabel value="male" control={<Radio color="primary"/>} label="Male" />
               <FormControlLabel
                 value="other"
-                control={<Radio />}
+                control={<Radio color="primary"/>}
                 label="Other"
               />
             </RadioGroup>
@@ -325,7 +373,7 @@ const Form = () => {
         <Box className={classes.innerBox}>
           <CustomButton
             buttonFunction={() => submitHandler()}
-            buttonText={"Submit"}
+            buttonText={isEditMode ? "Edit" : "Submit"}
           ></CustomButton>
         </Box>
         <Box className={classes.innerBox}>
@@ -337,9 +385,9 @@ const Form = () => {
 
       </Box>
       <Box className={classes.centeredText}>
-        {!isFilled && <h3>You need to fill both name and surname</h3>}
+        {!isFilled ? <h3>You need to fill both name and surname</h3>: <h3> </h3>}
+        {copied && <p className={classes.centeredText}>Copied to clipboard</p>}
       </Box>
-      {copied && <p className={classes.centeredText}>Copied to clipboard</p>}
       <Box className={classes.outerBox}>
         <Box className={classes.tableBox}>
           <TableContainer component={Paper}>
@@ -369,14 +417,15 @@ const Form = () => {
                     <TableCell>{row.isImperialUnit ? "Yes" : "No"}</TableCell>
                     <TableCell>{row.gender}</TableCell>
                     <TableCell align="right">
-                      <CustomButton
-                        buttonFunction={() => removeFromLS(row.id)}
-                        buttonText={"Delete"}
-                      ></CustomButton>
-                      <CustomButton
-                        buttonFunction={() => copyToClipboard(row.id)}
-                        buttonText={"Copy To Clipboard"}
-                      ></CustomButton>
+                      <Button variant="outlined" size="large" color="primary" onClick={() => editRow(row.id)}>
+                        <AiOutlineEdit/>
+                      </Button>
+                      <Button variant="outlined" size="large" color="secondary" onClick={() => removeFromLS(row.id)}>
+                        <MdDelete/>
+                      </Button>
+                      <Button variant="outlined" size="large" color="default" onClick={() => copyToClipboard(row.id)}>
+                        <BiClipboard/>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
