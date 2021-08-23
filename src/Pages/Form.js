@@ -19,6 +19,12 @@ import CustomTable from "../components/CustomTable";
 import { Grid } from "@material-ui/core";
 import { Paper } from "@material-ui/core";
 import { Container } from "@material-ui/core";
+import { Snackbar } from "@material-ui/core";
+import MuiAlert from "@material-ui/lab/Alert";
+
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
 
 const useStyles = makeStyles({
   mainContainer: {
@@ -43,6 +49,8 @@ const Form = () => {
   const [countries, setCountries] = useState([]);
   const [isImperialUnit, setIsImperialUnit] = useState(false);
   const [usersData, setUsersData] = useState([]);
+  const [alertSuccessOpen, setAlertSuccessOpen] = useState(false);
+  const [alertFailOpen, setAlertFailOpen] = useState(false);
 
   const switchRef = useRef();
 
@@ -51,7 +59,6 @@ const Form = () => {
     if (localStorage.getItem("userData")) {
       setUsersData(JSON.parse(localStorage.getItem("userData")));
     }
-    //localStorage.clear(); //TO BE REMOVED
   }, []);
 
   const surnameHandler = (value) => {
@@ -83,38 +90,51 @@ const Form = () => {
   };
 
   const submitHandler = () => {
-    const userCountry = countries[country].countryName;
-    const userWeight = isImperialUnit
-      ? parseFloat((weight * 0.45359237).toPrecision(2))
-      : weight;
-    const userHeight = isImperialUnit
-      ? parseFloat((height * 2.54).toPrecision(2))
-      : height;
+    if (
+      userName === "" ||
+      surname === "" ||
+      gender === "" ||
+      country === "" ||
+      weight <= 0 ||
+      height <= 0
+    )
+      setAlertFailOpen(true);
+    else {
+      const userCountry = countries[country].countryName;
+      const userWeight = isImperialUnit
+        ? parseFloat((weight * 0.45359237).toPrecision(2))
+        : weight;
+      const userHeight = isImperialUnit
+        ? parseFloat((height * 2.54).toPrecision(2))
+        : height;
 
-    const userInfo = {
-      surname,
-      weight: userWeight,
-      height: userHeight,
-      userName,
-      gender,
-      country: userCountry,
-    };
+      const userInfo = {
+        surname,
+        weight: userWeight,
+        height: userHeight,
+        userName,
+        gender,
+        country: userCountry,
+      };
 
-    const usersData = localStorage.getItem("userData");
-    let newUsersData;
-    if (usersData) {
-      newUsersData = JSON.parse(usersData);
-      userInfo.id = newUsersData.length + 1;
-      newUsersData.push(userInfo);
-    } else {
-      newUsersData = [];
-      userInfo.id = 1;
-      newUsersData.push(userInfo);
+      const usersData = localStorage.getItem("userData");
+      let newUsersData;
+      if (usersData) {
+        newUsersData = JSON.parse(usersData);
+        userInfo.id = newUsersData.length + 1;
+        newUsersData.push(userInfo);
+      } else {
+        newUsersData = [];
+        userInfo.id = 1;
+        newUsersData.push(userInfo);
+      }
+
+      setUsersData(newUsersData);
+      const json = JSON.stringify(newUsersData);
+      localStorage.setItem("userData", json);
+
+      setAlertSuccessOpen(true);
     }
-
-    setUsersData(newUsersData);
-    const json = JSON.stringify(newUsersData);
-    localStorage.setItem("userData", json);
   };
 
   const getCountries = () => {
@@ -128,143 +148,181 @@ const Form = () => {
   };
 
   return (
-    <Grid container>
-      <Grid item xs={4}>
-        <Container
-          component="main"
-          maxWidth="xs"
-          className={classes.mainContainer}
+    <>
+      <Grid container>
+        <Grid item xs={4}>
+          <Container
+            component="main"
+            maxWidth="xs"
+            className={classes.mainContainer}
+          >
+            <Paper className={classes.paper}>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField
+                    required
+                    id="name-input"
+                    label="Name"
+                    variant="outlined"
+                    onChange={(e) => userNameHandler(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    required
+                    id="surname-input"
+                    label="Surname"
+                    variant="outlined"
+                    onChange={(e) => surnameHandler(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth required>
+                    <InputLabel id="coutry-label">Country</InputLabel>
+                    <Select
+                      labelId="country-label"
+                      id="country-select"
+                      value={country}
+                      onChange={(e) => countryHandler(e.target.value)}
+                    >
+                      {countries.map((item) => (
+                        <MenuItem key={item.id} value={item.id}>
+                          {item.countryName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={4}>
+                  <TextField
+                    required
+                    label="Weight"
+                    type="number"
+                    id="weight-input"
+                    onChange={(e) => weightHandler(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          {isImperialUnit ? "Lbs" : "Kg"}
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={4}>
+                  <TextField
+                    required
+                    ref={switchRef}
+                    label="Height"
+                    id="height-input"
+                    type="number"
+                    onChange={(e) => heightHandler(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          {isImperialUnit ? "Inc" : "Cm"}
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={4}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={isImperialUnit}
+                        onChange={() => unitHandler()}
+                        name="checkedA"
+                        inputProps={{ "aria-label": "secondary checkbox" }}
+                      />
+                    }
+                    label={isImperialUnit ? "Imperial" : "Metric"}
+                    labelPlacement="top"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl
+                    required
+                    className={clsx(classes.buttonGroup, classes.button)}
+                    component="fieldset"
+                  >
+                    <FormLabel component="legend">Gender</FormLabel>
+                    <RadioGroup
+                      row
+                      aria-label="gender"
+                      name="gender1"
+                      value={gender}
+                      onChange={(e) => genderHandler(e.target.value)}
+                    >
+                      <FormControlLabel
+                        value="female"
+                        control={<Radio />}
+                        label="Female"
+                      />
+                      <FormControlLabel
+                        value="male"
+                        control={<Radio />}
+                        label="Male"
+                      />
+                      <FormControlLabel
+                        value="other"
+                        control={<Radio />}
+                        label="Other"
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <CustomButton
+                    buttonFunction={() => submitHandler()}
+                    buttonText={"Submit"}
+                  ></CustomButton>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Container>
+        </Grid>
+        <Grid item xs={8} className={classes.mainContainer}>
+          <CustomTable
+            tableData={usersData}
+            isImperialUnit={isImperialUnit}
+            setUsersData={setUsersData}
+          />
+        </Grid>
+      </Grid>
+      <Snackbar
+        open={alertSuccessOpen}
+        autoHideDuration={6000}
+        onClose={() => {
+          setAlertSuccessOpen(false);
+        }}
+      >
+        <Alert
+          onClose={() => {
+            setAlertSuccessOpen(false);
+          }}
+          severity="success"
         >
-          <Paper className={classes.paper}>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <TextField
-                  id="name-input"
-                  label="Name"
-                  variant="outlined"
-                  onChange={(e) => userNameHandler(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  required
-                  id="surname-input"
-                  label="Surname"
-                  variant="outlined"
-                  onChange={(e) => surnameHandler(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel id="coutry-label">Country</InputLabel>
-                  <Select
-                    labelId="country-label"
-                    id="country-select"
-                    value={country}
-                    onChange={(e) => countryHandler(e.target.value)}
-                  >
-                    {countries.map((item) => (
-                      <MenuItem key={item.id} value={item.id}>
-                        {item.countryName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  label="Weight"
-                  type="number"
-                  id="weight-input"
-                  onChange={(e) => weightHandler(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        {isImperialUnit ? "Lbs" : "Kg"}
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  ref={switchRef}
-                  label="Height"
-                  id="height-input"
-                  type="number"
-                  onChange={(e) => heightHandler(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        {isImperialUnit ? "Inc" : "Cm"}
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={isImperialUnit}
-                      onChange={() => unitHandler()}
-                      name="checkedA"
-                      inputProps={{ "aria-label": "secondary checkbox" }}
-                    />
-                  }
-                  label={isImperialUnit ? "Imperial" : "Metric"}
-                  labelPlacement="top"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl
-                  className={clsx(classes.buttonGroup, classes.button)}
-                  component="fieldset"
-                >
-                  <FormLabel component="legend">Gender</FormLabel>
-                  <RadioGroup
-                    row
-                    aria-label="gender"
-                    name="gender1"
-                    value={gender}
-                    onChange={(e) => genderHandler(e.target.value)}
-                  >
-                    <FormControlLabel
-                      value="female"
-                      control={<Radio />}
-                      label="Female"
-                    />
-                    <FormControlLabel
-                      value="male"
-                      control={<Radio />}
-                      label="Male"
-                    />
-                    <FormControlLabel
-                      value="other"
-                      control={<Radio />}
-                      label="Other"
-                    />
-                  </RadioGroup>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <CustomButton
-                  buttonFunction={() => submitHandler()}
-                  buttonText={"Submit"}
-                ></CustomButton>
-              </Grid>
-            </Grid>
-          </Paper>
-        </Container>
-      </Grid>
-      <Grid item xs={8} className={classes.mainContainer}>
-        <CustomTable
-          tableData={usersData}
-          isImperialUnit={isImperialUnit}
-          setUsersData={setUsersData}
-        />
-      </Grid>
-    </Grid>
+          User successfully added to the table.
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={alertFailOpen}
+        autoHideDuration={6000}
+        onClose={() => {
+          setAlertFailOpen(false);
+        }}
+      >
+        <Alert
+          onClose={() => {
+            setAlertFailOpen(false);
+          }}
+          severity="error"
+        >
+          Please fill all input areas.
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 
