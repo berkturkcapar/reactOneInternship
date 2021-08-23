@@ -48,13 +48,10 @@ const Form = () => {
 
   useEffect(() => {
     getCountries();
-    localStorage.clear(); //TO BE REMOVED
-  }, []);
-
-  useEffect(() => {
-    const savedUserInfo = localStorage.getItem("userInformation");
-    JSON.parse(savedUserInfo)?.isImperialUnit &&
-      setIsImperialUnit(JSON.parse(savedUserInfo).isImperialUnit);
+    if (localStorage.getItem("userData")) {
+      setUsersData(JSON.parse(localStorage.getItem("userData")));
+    }
+    //localStorage.clear(); //TO BE REMOVED
   }, []);
 
   const surnameHandler = (value) => {
@@ -87,13 +84,19 @@ const Form = () => {
 
   const submitHandler = () => {
     const userCountry = countries[country].countryName;
+    const userWeight = isImperialUnit
+      ? parseFloat((weight * 0.45359237).toPrecision(2))
+      : weight;
+    const userHeight = isImperialUnit
+      ? parseFloat((height * 2.54).toPrecision(2))
+      : height;
+
     const userInfo = {
       surname,
-      weight,
-      height,
+      weight: userWeight,
+      height: userHeight,
       userName,
       gender,
-      isImperialUnit,
       country: userCountry,
     };
 
@@ -255,7 +258,11 @@ const Form = () => {
         </Container>
       </Grid>
       <Grid item xs={8} className={classes.mainContainer}>
-        <CustomTable tableData={usersData} />
+        <CustomTable
+          tableData={usersData}
+          isImperialUnit={isImperialUnit}
+          setUsersData={setUsersData}
+        />
       </Grid>
     </Grid>
   );

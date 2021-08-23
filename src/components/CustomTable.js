@@ -6,10 +6,23 @@ import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
 import { makeStyles } from "@material-ui/core/styles";
+import CustomButton from "./CustomButton";
+import { Box } from "@material-ui/core";
 
 const useStyles = makeStyles({});
 
-const CustomTable = ({ tableData }) => {
+const CustomTable = ({ tableData, isImperialUnit, setUsersData }) => {
+  const weightHandler = (weight, isImperialUnit) => {
+    const converter = 2.20462262185;
+    if (isImperialUnit) return (weight * converter).toFixed(2);
+    else return weight;
+  };
+  const heightHandler = (height, isImperialUnit) => {
+    const converter = 0.393700787;
+    if (isImperialUnit) return (height * converter).toFixed(2);
+    else return height;
+  };
+
   return (
     <TableContainer component={Paper}>
       <Table className="classes.table" aria-label="User table">
@@ -17,8 +30,8 @@ const CustomTable = ({ tableData }) => {
           <TableRow>
             <TableCell>Name</TableCell>
             <TableCell>Surname</TableCell>
-            <TableCell>Weight</TableCell>
-            <TableCell>Height</TableCell>
+            <TableCell>Weight ({isImperialUnit ? "Lbs" : "Kg"})</TableCell>
+            <TableCell>Height ({isImperialUnit ? "Inc" : "Cm"})</TableCell>
             <TableCell>Gender</TableCell>
             <TableCell>Country</TableCell>
           </TableRow>
@@ -29,13 +42,32 @@ const CustomTable = ({ tableData }) => {
               <TableRow key={user.id}>
                 <TableCell>{user.userName}</TableCell>
                 <TableCell>{user.surname}</TableCell>
-                <TableCell>{user.weight}</TableCell>
-                <TableCell>{user.height}</TableCell>
+                <TableCell>
+                  {weightHandler(user.weight, isImperialUnit)}
+                </TableCell>
+                <TableCell>
+                  {heightHandler(user.height, isImperialUnit)}
+                </TableCell>
                 <TableCell>{user.gender}</TableCell>
                 <TableCell>{user.country}</TableCell>
               </TableRow>
             );
           })}
+          {tableData.length > 0 ? (
+            <TableRow>
+              <Box p={2}>
+                <CustomButton
+                  buttonFunction={() => {
+                    localStorage.clear();
+                    setUsersData([]);
+                  }}
+                  buttonText={"Clear Table"}
+                ></CustomButton>
+              </Box>
+            </TableRow>
+          ) : (
+            <></>
+          )}
         </TableBody>
       </Table>
     </TableContainer>
