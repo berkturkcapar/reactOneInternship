@@ -88,6 +88,12 @@ const Form = () => {
   }, []);
 
   useEffect(() => {
+    const savedUserInfo = localStorage.getItem("userInformation");
+    JSON.parse(savedUserInfo)?.isImperialUnit &&
+      setIsImperialUnit(JSON.parse(savedUserInfo).isImperialUnit);
+  }, []);
+
+  useEffect(() => {
     const usersData = localStorage.getItem("userData");
     JSON.parse(usersData)?.users &&
     setUsers(JSON.parse(usersData).users);
