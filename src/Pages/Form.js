@@ -15,15 +15,22 @@ import Select from "@material-ui/core/Select";
 import axios from "axios";
 import CustomButton from "../components/CustomButton";
 import clsx from "clsx";
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableContainer from '@material-ui/core/TableContainer';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Paper from '@material-ui/core/Paper';
 
 const useStyles = makeStyles({
   box: {
-    margin: "100px",
-    display: "flex",
+    margin: "10px",
   },
   outerBox: {
     marginTop: "25px",
     display: "flex",
+    justifyContent: "center"
   },
   innerBox: {
     margin: "25px",
@@ -32,11 +39,33 @@ const useStyles = makeStyles({
     marginRight: "25px",
   },
   button: {
-    margin: "100px",
+    margin: "10px",
+    marginRight: "90px"
   },
   formControl: {
-    minWidth: 120,
+    minWidth: "200px",
   },
+  inputField: {
+    minWidth: "150px",
+  },
+  leftBox: {
+    width: "800px",
+    float: "left",
+  },
+  rightBox: {
+    marginTop: "50px",
+    width: "400px",
+    float: "right",
+    display: "flex",
+    justifyContent: "center"
+  },
+  table: {
+    minWidth: 650,
+    margin: "25px"
+  },
+  buttonBox: {
+    marginLeft: "-70px",
+  }
 });
 
 const Form = () => {
@@ -50,6 +79,7 @@ const Form = () => {
   const [country, setCountry] = useState("");
   const [countries, setCountries] = useState([]);
   const [isImperialUnit, setIsImperialUnit] = useState(false);
+  const [users, setUsers] = useState([]);
 
   const switchRef = useRef();
 
@@ -58,9 +88,9 @@ const Form = () => {
   }, []);
 
   useEffect(() => {
-    const savedUserInfo = localStorage.getItem("userInformation");
-    JSON.parse(savedUserInfo)?.isImperialUnit &&
-      setIsImperialUnit(JSON.parse(savedUserInfo).isImperialUnit);
+    const usersData = localStorage.getItem("userData");
+    JSON.parse(usersData)?.users &&
+    setUsers(JSON.parse(usersData).users);
   }, []);
 
   const surnameHandler = (value) => {
@@ -95,19 +125,29 @@ const Form = () => {
     console.log(switchRef);
   };
 
+  const clearData = () => {
+    const updatedUsers = [];
+    setUsers(updatedUsers);
+    localStorage.setItem("userData", JSON.stringify(updatedUsers));
+  }
+
   const submitHandler = () => {
     const userInfo = {
+      userName,
       surname,
+      country,
       weight,
       height,
-      userName,
       gender,
       isImperialUnit,
-      country,
     };
 
+    const updatedUsers = [...users, userInfo];
+    setUsers(updatedUsers);
+    const currentUsers = JSON.stringify(updatedUsers);
     const stringUserInfo = JSON.stringify(userInfo);
     localStorage.setItem("userInformation", stringUserInfo);
+    localStorage.setItem("userData", currentUsers);
   };
 
   const getCountries = () => {
@@ -115,16 +155,16 @@ const Form = () => {
       const countryArr = res.data.data.map((countryItem, index) => {
         return { countryName: countryItem.country, id: index };
       });
-
       setCountries(countryArr);
     });
   };
 
   return (
-    <Box classes={classes.box}>
-      <Box className={classes.outerBox}>
+    <Box className={classes.box}>
+      <Box className={classes.leftBox}>
+        <Box className={classes.outerBox}>
         <Box className={classes.innerBox}>
-          <TextField
+          <TextField className={classes.inputField}
             id="name-input"
             label="Name"
             variant="outlined"
@@ -132,7 +172,7 @@ const Form = () => {
           />
         </Box>
         <Box className={classes.innerBox}>
-          <TextField
+          <TextField className={classes.inputField}
             required
             id="surname-input"
             label="Surname"
@@ -160,33 +200,7 @@ const Form = () => {
       </Box>
       <Box className={classes.outerBox}>
         <Box className={classes.innerBox}>
-          <FormControl
-            className={clsx(classes.buttonGroup, classes.button)}
-            component="fieldset"
-          >
-            <FormLabel component="legend">Gender</FormLabel>
-            <RadioGroup
-              aria-label="gender"
-              name="gender1"
-              value={gender}
-              onChange={(e) => genderHandler(e.target.value)}
-            >
-              <FormControlLabel
-                value="female"
-                control={<Radio />}
-                label="Female"
-              />
-              <FormControlLabel value="male" control={<Radio />} label="Male" />
-              <FormControlLabel
-                value="other"
-                control={<Radio />}
-                label="Other"
-              />
-            </RadioGroup>
-          </FormControl>
-        </Box>
-        <Box className={classes.innerBox}>
-          <TextField
+          <TextField className={classes.inputField}
             label="Weight"
             type="number"
             id="weight-input"
@@ -201,7 +215,7 @@ const Form = () => {
           />
         </Box>
         <Box className={classes.innerBox}>
-          <TextField
+          <TextField className={classes.inputField}
             ref={switchRef}
             label="Height"
             id="height-input"
@@ -230,8 +244,37 @@ const Form = () => {
             labelPlacement="top"
           />
         </Box>
-        <Box className={classes.outerBox}>
+      </Box>
+      </Box>
+      <Box className={classes.rightBox}>
           <Box className={classes.innerBox}>
+          <FormControl
+            className={clsx(classes.buttonGroup, classes.button)}
+            component="fieldset"
+          >
+            <FormLabel component="legend">Gender</FormLabel>
+            <RadioGroup
+              aria-label="gender"
+              name="gender1"
+              value={gender}
+              onChange={(e) => genderHandler(e.target.value)}
+            >
+              <FormControlLabel
+                value="female"
+                control={<Radio />}
+                label="Female"
+              />
+              <FormControlLabel value="male" control={<Radio />} label="Male" />
+              <FormControlLabel
+                value="other"
+                control={<Radio />}
+                label="Other"
+              />
+            </RadioGroup>
+          </FormControl>
+        </Box>
+        <Box className={classes.buttonBox}>
+            <Box className={classes.innerBox}>
             <CustomButton
               buttonFunction={() => submitHandler()}
               buttonText={"Submit"}
@@ -243,7 +286,41 @@ const Form = () => {
               buttonText={"Get Ref Info"}
             ></CustomButton>
           </Box>
+          <Box className={classes.innerBox}>
+            <CustomButton
+              buttonFunction={() => clearData()}
+              buttonText={"Clear"}
+            ></CustomButton>
+          </Box>
         </Box>
+        </Box>
+      <Box>
+        <TableContainer component={Paper}>
+      <Table className={classes.table} aria-label="simple table">
+        <TableHead>
+          <TableRow>
+            <TableCell align="left">Name</TableCell>
+            <TableCell align="left">Surname</TableCell>
+            <TableCell align="left">Country</TableCell>
+            <TableCell align="left">Weight</TableCell>
+            <TableCell align="left">Height</TableCell>
+            <TableCell align="left">Gender</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {users.map((user) => (
+            <TableRow>
+              <TableCell align="left">{user.userName}</TableCell>
+              <TableCell align="left">{user.surname}</TableCell>
+              <TableCell align="left">{countries[user.country].countryName}</TableCell>
+              <TableCell align="left">{user.weight + (user.isImperialUnit ? "(lbs)":"(kg)")}</TableCell>
+              <TableCell align="left">{user.height + (user.isImperialUnit ? "(inch)":"(cm)")}</TableCell>
+              <TableCell align="left">{user.gender}</TableCell>
+            </TableRow>
+            ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
       </Box>
     </Box>
   );
